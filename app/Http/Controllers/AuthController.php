@@ -15,22 +15,26 @@ class AuthController extends Controller
     }
 
     public function login(Request $request)
-    {
-        $login = $request->validate([
-            'nama' => 'required',
-            'password' => 'required',
-        ]);
+{
+    // Validasi input email
+    $credentials = $request->validate([
+        'email' => ['required', 'email'],
+        'password' => ['required'],
+    ]);
 
-        if (Auth::attempt($login)) {
-            $request->session()->regenerate();
+    // Coba Login
+    if (Auth::attempt($credentials)) {
+        $request->session()->regenerate();
 
-            // CATAT LOG LOGIN
-            LogActivity::record('Login', 'User ' . Auth::user()->nama . ' berhasil login.');
+        // Log Aktivitas
+        \App\Models\LogActivity::record('Login', 'User berhasil login ke sistem');
 
-            return redirect()->intended('/');
-        }
-        return redirect()->back()->with('error', 'Nama atau Password Salah');
+        return redirect()->intended('/');
     }
+
+    // Jika Gagal
+    return back()->with('error', 'Email atau password salah. Silakan coba lagi.');
+}
 
     public function logout(Request $request)
     {

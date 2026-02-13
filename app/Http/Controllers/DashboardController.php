@@ -2,33 +2,32 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\User;
 use App\Models\Playstation;
-use App\Http\Controllers\Controller;
 use App\Models\Transaksi;
+use App\Models\User;
 
 class DashboardController extends Controller
 {
-    public function __construct()
-    {
-        $this->middleware('auth');
-    }
-
     public function index()
     {
-        $totalUser = User::count();
-        $totalPs = Playstation::count();
-        $totalUnitPs = Playstation::sum('stok');
-        $totalDipakai = Transaksi::where('status', 'main')->count();
-        $transaksis = Transaksi::with(['playstation', 'pelanggan'])
+        // 1. Hitung Statistik Card
+        $totalUser      = User::where('role', 'pelanggan')->count();
+        $totalPs        = Playstation::count();
+        $totalUnitPs    = Playstation::sum('stok'); // Total unit stok tersedia (jika mau hitung stok real)
+        $totalDipakai   = Transaksi::where('status', 'main')->count();
+
+        // 2. Ambil 5 Transaksi Terakhir (Tanpa Pagination)
+        $transaksis = Transaksi::with(['pelanggan', 'playstation'])
             ->latest()
+            ->limit(5)
             ->get();
 
+        // Kirim data dengan nama variabel yang sesuai View
         return view('layout.dashboard', compact(
-            'totalUser',
-            'totalPs',
-            'totalUnitPs',
-            'totalDipakai',
+            'totalUser', 
+            'totalUnitPs', 
+            'totalDipakai', 
+            'totalPs', 
             'transaksis'
         ));
     }
