@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Transaksi;
 use App\Models\Playstation;
 use App\Models\User;
-use App\Models\LogActivity; // <--- Import Model Log
+use App\Models\LogActivity;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\DB;
@@ -97,26 +97,25 @@ class TransaksiController extends Controller
         return back();
     }
 
-    public function requestReturn($id)
+    public function menyelesaikan($id)
     {
-        // Menggunakan logika FIX TIMEZONE yang sudah kita bahas sebelumnya
         $denda = DB::select("SELECT hitung_total_denda(?) AS denda", [$id])[0]->denda;
 
         $t = Transaksi::findOrFail($id);
         $t->update([
-            'status' => 'return_req',
+            'status' => 'menyelesaikan',
             'denda' => $denda
         ]);
 
         // LOG REQUEST RETURN
-        LogActivity::record('Ajukan Kembali', "Pelanggan mengajukan pengembalian ID #{$id}. Denda: Rp " . number_format($denda));
+        LogActivity::record('Menyelesaikan Rental', "Pelanggan menyelesaikan rentalnya ID #{$id}. Denda: Rp " . number_format($denda));
 
-        return back()->with('success', 'Return diajukan.');
+        return back()->with('success', 'Menyelesaikan diajukan.');
     }
 
-    public function approveReturn($id)
+    public function approveFinish($id)
     {
-        $t = Transaksi::findOrFail($id);
+        // Transaksi::findOrFail($id);
 
         try {
             DB::statement("CALL selesaikan_transaksi(?)", [$id]);

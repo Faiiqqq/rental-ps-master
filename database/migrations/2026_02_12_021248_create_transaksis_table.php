@@ -19,7 +19,7 @@ return new class extends Migration {
             $table->enum('status', [
                 'menunggu',
                 'main',
-                'return_req',
+                'menyelesaikan',
                 'selesai',
                 'ditolak',
                 'batal'

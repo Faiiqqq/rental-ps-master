@@ -24,7 +24,7 @@
                         <tr>
                             <th class="px-6 py-4 text-left">PS</th>
                             <th class="px-6 py-4 text-left">Pelanggan</th>
-                            <th class="px-6 py-4 text-left">Batas Kembali</th>
+                            <th class="px-6 py-4 text-left">Jadwal</th>
                             <th class="px-6 py-4 text-left">Durasi</th>
                             <th class="px-6 py-4 text-left">Total</th>
                             <th class="px-6 py-4 text-left">Denda</th>
@@ -47,7 +47,8 @@
                                 </td>
 
                                 <td class="px-6 py-4">
-                                    {{ $t->batas_kembali }}
+                                    <div>Mulai: {{ $t->jam_mulai->format('d M Y,H:i') }}</div>
+                                    <div class="text-xs text-red-500">Batas: {{ $t->batas_kembali->format('d M Y,H:i') }}</div>
                                 </td>
 
                                 <td class="px-6 py-4">
@@ -74,8 +75,8 @@
                                             <span class="bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-xs">Main</span>
                                         @break
 
-                                        @case('return_req')
-                                            <span class="bg-purple-100 text-purple-700 px-3 py-1 rounded-full text-xs">Return Req</span>
+                                        @case('menyelesaikan')
+                                            <span class="bg-purple-100 text-purple-700 px-3 py-1 rounded-full text-xs">Menunggu</span>
                                         @break
 
                                         @case('selesai')
@@ -108,8 +109,8 @@
                                             </form>
                                         @endif
 
-                                        @if ($t->status == 'return_req')
-                                            <form action="{{ route('transaksi.approveReturn', $t->id_transaksi) }}"
+                                        @if ($t->status == 'menyelesaikan')
+                                            <form action="{{ route('transaksi.approveFinish', $t->id_transaksi) }}"
                                                 method="POST" class="inline">
                                                 @csrf @method('PATCH')
                                                 <button class="text-blue-600 hover:underline">Selesaikan</button>
@@ -129,10 +130,10 @@
                                         @endif
 
                                         @if ($t->status == 'main')
-                                            <form action="{{ route('transaksi.requestReturn', $t->id_transaksi) }}"
+                                            <form action="{{ route('transaksi.menyelesaikan', $t->id_transaksi) }}"
                                                 method="POST" class="inline">
                                                 @csrf @method('PATCH')
-                                                <button class="text-orange-600 hover:underline">Ajukan Pengenmbalian</button>
+                                                <button class="text-orange-600 hover:underline">Sudah Selesai</button>
                                             </form>
                                         @endif
                                     @endif

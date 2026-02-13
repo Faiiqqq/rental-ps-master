@@ -35,10 +35,10 @@ Route::middleware(['auth'])->group(function () {
     Route::patch('transaksi/{id}/approve', [TransaksiController::class, 'approve'])->name('transaksi.approve');
     Route::patch('transaksi/{id}/reject', [TransaksiController::class, 'reject'])->name('transaksi.reject');
 
-    Route::patch('transaksi/{id}/request-return', [TransaksiController::class, 'requestReturn'])->name('transaksi.requestReturn');
+    Route::patch('transaksi/{id}/menyelesaikan', [TransaksiController::class, 'menyelesaikan'])->name('transaksi.menyelesaikan');
 
-    Route::patch('transaksi/{id}/approve-return', [TransaksiController::class, 'approveReturn'])->name('transaksi.approveReturn');
-    Route::patch('transaksi/{id}/reject-return', [TransaksiController::class, 'rejectReturn'])->name('transaksi.rejectReturn');
+    Route::patch('transaksi/{id}/approve-finish', [TransaksiController::class, 'approveFinish'])->name('transaksi.approveFinish');
+    // Route::patch('transaksi/{id}/reject-', [TransaksiController::class, 'rejectReturn'])->name('transaksi.rejectReturn');
 
     Route::get('/log-activity', [LogActivityController::class, 'index'])->name('log.index');
 
