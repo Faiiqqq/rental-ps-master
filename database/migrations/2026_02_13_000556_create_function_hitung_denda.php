@@ -12,7 +12,7 @@ return new class extends Migration {
         DETERMINISTIC
         BEGIN
             DECLARE v_batas_kembali DATETIME;
-            DECLARE v_denda_per_jam INT DEFAULT 2000;
+            DECLARE v_denda_per_jam INT DEFAULT 5000;
             DECLARE v_telat_menit INT;
             DECLARE v_hasil_denda INT DEFAULT 0;
 

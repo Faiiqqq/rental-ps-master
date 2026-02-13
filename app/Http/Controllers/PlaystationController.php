@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Playstation;
-use App\Models\LogActivity; // <--- Import
+use App\Models\LogActivity;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 

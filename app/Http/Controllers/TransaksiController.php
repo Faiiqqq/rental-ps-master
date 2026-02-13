@@ -21,9 +21,11 @@ class TransaksiController extends Controller
 
     public function index()
     {
+        // FITUR: PAGINATION (Mengganti get() dengan paginate())
+        // FITUR: RELASI (with playstation & pelanggan)
         $transaksis = Transaksi::with(['playstation', 'pelanggan'])
             ->latest()
-            ->get();
+            ->paginate(10); // Menampilkan 10 data per halaman
 
         return view('transaksi.main', compact('transaksis'));
     }
@@ -44,11 +46,17 @@ class TransaksiController extends Controller
             'lama_jam' => 'required|integer|min:1'
         ]);
 
-        DB::transaction(function () use ($request) {
+        // FITUR: COMMIT DAN ROLLBACK MANUAL
+        DB::beginTransaction(); // Memulai Transaksi Database
+
+        try {
+            // Locking row untuk mencegah race condition (Best Practice)
             $ps = Playstation::lockForUpdate()->findOrFail($request->id_ps);
 
             if ($ps->stok <= 0) {
-                abort(400, 'Maaf, stok PlayStation ini sedang kosong.');
+                // Rollback tidak wajib jika belum ada query insert/update, tapi baik untuk konsistensi
+                DB::rollBack(); 
+                return back()->with('error', 'Maaf, stok PlayStation ini sedang kosong.');
             }
 
             $lamaJam = (int) $request->lama_jam;
@@ -58,7 +66,7 @@ class TransaksiController extends Controller
 
             $transaksi = Transaksi::create([
                 'id_ps' => $ps->id_ps,
-                'id_user' => Auth::id(),
+                'id_user' => Auth::id(), // Operator yang input
                 'jam_mulai' => $mulai,
                 'batas_kembali' => $batas,
                 'lama_jam' => $lamaJam,
@@ -67,38 +75,80 @@ class TransaksiController extends Controller
                 'status' => 'menunggu'
             ]);
 
-            // LOG TRANSAKSI BARU
-            LogActivity::record('Order Rental', "Membuat pesanan baru ID #{$transaksi->id_transaksi} (Total: Rp " . number_format($total) . ")");
-        });
+            LogActivity::record('Order Rental', "Membuat pesanan baru ID #{$transaksi->id_transaksi}");
 
-        return redirect()->route('transaksi.index')
-            ->with('success', 'Pesanan rental berhasil dibuat.');
+            // FITUR: COMMIT (Simpan permanen jika tidak ada error)
+            DB::commit();
+
+            return redirect()->route('transaksi.index')
+                ->with('success', 'Pesanan rental berhasil dibuat.');
+
+        } catch (\Exception $e) {
+            // FITUR: ROLLBACK (Batalkan semua query jika terjadi error)
+            DB::rollBack();
+            return back()->with('error', 'Terjadi kesalahan: ' . $e->getMessage());
+        }
+    }
+
+    // FITUR: EDIT TRANSAKSI (Hanya durasi, saat status 'main')
+    public function edit($id)
+    {
+        $transaksi = Transaksi::findOrFail($id);
+        
+        if($transaksi->status !== 'main') {
+            return back()->with('error', 'Hanya transaksi yang sedang main yang bisa diedit durasinya.');
+        }
+
+        return view('transaksi.edit', compact('transaksi'));
+    }
+
+    public function update(Request $request, $id)
+    {
+        $request->validate([
+            'tambah_jam' => 'required|integer|min:1'
+        ]);
+
+        $t = Transaksi::with('playstation')->findOrFail($id);
+
+        // Update Durasi
+        $jamBaru = $t->lama_jam + $request->tambah_jam;
+        $totalBaru = $jamBaru * $t->playstation->hargaPerJam;
+        $batasBaru = Carbon::parse($t->jam_mulai)->addHours($jamBaru);
+
+        $t->update([
+            'lama_jam' => $jamBaru,
+            'total_bayar' => $totalBaru,
+            'batas_kembali' => $batasBaru
+        ]);
+
+        LogActivity::record('Edit Transaksi', "Menambah durasi {$request->tambah_jam} jam untuk ID #{$id}");
+
+        return redirect()->route('transaksi.index')->with('success', 'Durasi berhasil ditambahkan.');
     }
 
     public function approve($id)
     {
         $t = Transaksi::findOrFail($id);
-        $t->update(['status' => 'main']);
+        
+        // FITUR: TRIGGER (Akan berjalan otomatis di database saat status diupdate ke 'main')
+        $t->update(['status' => 'main']); 
 
-        // LOG APPROVE
         LogActivity::record('Approve Rental', "Operator menyetujui transaksi ID #{$id}");
 
-        return back();
+        return back()->with('success', 'Rental dimulai (Stok berkurang otomatis via Trigger).');
     }
 
     public function reject($id)
     {
         $t = Transaksi::findOrFail($id);
         $t->update(['status' => 'ditolak']);
-
-        // LOG REJECT
         LogActivity::record('Tolak Rental', "Operator menolak transaksi ID #{$id}");
-
         return back();
     }
 
     public function menyelesaikan($id)
     {
+        // FITUR: STORED FUNCTION (hitung_total_denda)
         $denda = DB::select("SELECT hitung_total_denda(?) AS denda", [$id])[0]->denda;
 
         $t = Transaksi::findOrFail($id);
@@ -107,23 +157,20 @@ class TransaksiController extends Controller
             'denda' => $denda
         ]);
 
-        // LOG REQUEST RETURN
-        LogActivity::record('Menyelesaikan Rental', "Pelanggan menyelesaikan rentalnya ID #{$id}. Denda: Rp " . number_format($denda));
+        LogActivity::record('Menyelesaikan Rental', "Pelanggan menyelesaikan rental ID #{$id}. Denda: " . number_format($denda));
 
         return back()->with('success', 'Menyelesaikan diajukan.');
     }
 
     public function approveFinish($id)
     {
-        // Transaksi::findOrFail($id);
-
         try {
+            // FITUR: STORED PROCEDURE (selesaikan_transaksi)
             DB::statement("CALL selesaikan_transaksi(?)", [$id]);
 
-            // LOG SELESAI
-            LogActivity::record('Transaksi Selesai', "Operator menyelesaikan transaksi ID #{$id} dan stok dikembalikan.");
+            LogActivity::record('Transaksi Selesai', "Operator menyelesaikan transaksi ID #{$id}");
 
-            return back()->with('success', 'Transaksi selesai.');
+            return back()->with('success', 'Transaksi selesai (Stok bertambah otomatis via Trigger).');
         } catch (\Exception $e) {
             return back()->with('error', 'Gagal memproses: ' . $e->getMessage());
         }
@@ -132,21 +179,10 @@ class TransaksiController extends Controller
     public function destroy($id)
     {
         $t = Transaksi::findOrFail($id);
-
         if ($t->status === 'menunggu') {
             $t->delete();
-            // LOG BATAL
-            LogActivity::record('Batal Rental', "Pelanggan membatalkan pesanan ID #{$id}");
+            LogActivity::record('Batal Rental', "Pesanan ID #{$id} dibatalkan");
         }
-
-        return back();
-    }
-    
-    // Fungsi selesai manual (jika ada)
-    public function selesai($id)
-    {
-        // logic...
-        LogActivity::record('Force Finish', "Finish manual ID #{$id}");
         return back();
     }
 }
