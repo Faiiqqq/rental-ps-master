@@ -41,7 +41,6 @@
                             {{-- Info PS --}}
                             <td class="px-6 py-4 uppercase">
                                 <span class="font-bold text-gray-800">{{ $t->playstation->tipe }}</span>
-                                <div class="text-xs text-gray-400 mt-0.5">ID: #{{ $t->playstation->id_ps }}</div>
                             </td>
 
                             {{-- Info Pelanggan --}}
@@ -89,7 +88,7 @@
                                     $statusColor = match ($t->status) {
                                         'menunggu' => 'bg-yellow-100 text-yellow-700 border-yellow-200',
                                         'main' => 'bg-blue-100 text-blue-700 border-blue-200 animate-pulse',
-                                        'menyelesaikan' => 'bg-purple-100 text-purple-700 border-purple-200',
+                                        'stop' => 'bg-purple-100 text-purple-700 border-purple-200',
                                         'selesai' => 'bg-green-100 text-green-700 border-green-200',
                                         'ditolak' => 'bg-red-100 text-red-700 border-red-200',
                                         default => 'bg-gray-100 text-gray-600',
@@ -128,13 +127,13 @@
                                         @endif
 
                                         @if ($t->status == 'main')
-                                            <a href="{{ route('transaksi.edit', $t->id_transaksi) }}" title="Tambah Durasi"
+                                            <a href="{{ route('transaksi.edit', $t->id_transaksi) }}" title="Edit Durasi"
                                                 class="p-2 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-600 hover:text-white transition border border-blue-200">
-                                                <i data-feather="clock" class="w-4 h-4"></i>
+                                                <i data-feather="edit-3" class="w-4 h-4"></i>
                                             </a>
                                         @endif
 
-                                        @if ($t->status == 'menyelesaikan')
+                                        @if ($t->status == 'stop')
                                             <form action="{{ route('transaksi.approveFinish', $t->id_transaksi) }}"
                                                 method="POST">
                                                 @csrf @method('PATCH')
@@ -145,8 +144,7 @@
                                             </form>
                                         @endif
                                         @if ($t->status == 'main')
-                                            <form action="{{ route('transaksi.menyelesaikan', $t->id_transaksi) }}"
-                                                method="POST">
+                                            <form action="{{ route('transaksi.stop', $t->id_transaksi) }}" method="POST">
                                                 @csrf @method('PATCH')
                                                 <button title="Selesaikan Rental"
                                                     class="px-3 py-2 bg-orange-100 text-orange-700 rounded-lg hover:bg-orange-600 hover:text-white transition text-xs font-bold border border-orange-200">

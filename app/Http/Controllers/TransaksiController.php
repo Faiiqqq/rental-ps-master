@@ -104,14 +104,17 @@ class TransaksiController extends Controller
 
     public function update(Request $request, $id)
     {
+        // Validasi input baru
         $request->validate([
-            'tambah_jam' => 'required|integer|min:1'
+            'lama_jam_baru' => 'required|integer|min:1'
         ]);
 
         $t = Transaksi::with('playstation')->findOrFail($id);
 
-        // Update Durasi
-        $jamBaru = $t->lama_jam + $request->tambah_jam;
+        // Mengganti total durasi
+        $jamBaru = (int) $request->lama_jam_baru;
+        
+        // Hitung ulang total bayar & batas kembali berdasarkan jam baru
         $totalBaru = $jamBaru * $t->playstation->hargaPerJam;
         $batasBaru = Carbon::parse($t->jam_mulai)->addHours($jamBaru);
 
@@ -121,9 +124,9 @@ class TransaksiController extends Controller
             'batas_kembali' => $batasBaru
         ]);
 
-        LogActivity::record('Edit Transaksi', "Menambah durasi {$request->tambah_jam} jam untuk ID #{$id}");
+        LogActivity::record('Edit Durasi', "Mengubah durasi menjadi {$jamBaru} jam untuk ID #{$id}");
 
-        return redirect()->route('transaksi.index')->with('success', 'Durasi berhasil ditambahkan.');
+        return redirect()->route('transaksi.index')->with('success', 'Durasi berhasil diperbarui.');
     }
 
     public function approve($id)
@@ -146,20 +149,20 @@ class TransaksiController extends Controller
         return back();
     }
 
-    public function menyelesaikan($id)
+    public function stopMain($id)
     {
         // FITUR: STORED FUNCTION (hitung_total_denda)
         $denda = DB::select("SELECT hitung_total_denda(?) AS denda", [$id])[0]->denda;
 
         $t = Transaksi::findOrFail($id);
         $t->update([
-            'status' => 'menyelesaikan',
+            'status' => 'stop',
             'denda' => $denda
         ]);
 
-        LogActivity::record('Menyelesaikan Rental', "Pelanggan menyelesaikan rental ID #{$id}. Denda: " . number_format($denda));
+        LogActivity::record('Stop Main', "Pelanggan ingin Stop Main ID #{$id}. Denda: " . number_format($denda));
 
-        return back()->with('success', 'Menyelesaikan diajukan.');
+        return back()->with('success', 'Stop Main diajukan.');
     }
 
     public function approveFinish($id)
