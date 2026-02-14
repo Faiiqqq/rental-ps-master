@@ -33,7 +33,7 @@
             Playstation
         </a>
 
-        {{-- MENU KHUSUS ADMIN / OPERATOR --}}
+        {{-- MENU KHUSUS ADMIN --}}
         @if(auth()->user()->role !== 'pelanggan')
             
             <div class="pt-4 pb-2 px-4 text-xs font-semibold text-gray-400 uppercase">

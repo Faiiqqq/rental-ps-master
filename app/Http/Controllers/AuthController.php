@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use App\Models\LogActivity; // <--- Tambahkan ini
+use App\Models\LogActivity;
 
 class AuthController extends Controller
 {
@@ -27,7 +27,7 @@ class AuthController extends Controller
         $request->session()->regenerate();
 
         // Log Aktivitas
-        \App\Models\LogActivity::record('Login', 'User berhasil login ke sistem');
+        LogActivity::record('Login', 'User berhasil login ke sistem');
 
         return redirect()->intended('/');
     }

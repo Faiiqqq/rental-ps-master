@@ -97,7 +97,6 @@
                             {{-- Info PS --}}
                             <td class="px-6 py-4 uppercase">
                                 <span class="font-bold text-gray-800 block">{{ $t->playstation->tipe }}</span>
-                                <span class="text-xs text-gray-400">ID: #{{ $t->playstation->id_ps }}</span>
                             </td>
 
                             {{-- Info Pelanggan --}}
@@ -143,7 +142,7 @@
                                     $statusColor = match ($t->status) {
                                         'menunggu' => 'bg-yellow-100 text-yellow-700 border-yellow-200',
                                         'main' => 'bg-blue-100 text-blue-700 border-blue-200 animate-pulse',
-                                        'menyelesaikan' => 'bg-purple-100 text-purple-700 border-purple-200',
+                                        'stop' => 'bg-purple-100 text-purple-700 border-purple-200',
                                         'selesai' => 'bg-green-100 text-green-700 border-green-200',
                                         'ditolak' => 'bg-red-100 text-red-700 border-red-200',
                                         default => 'bg-gray-100 text-gray-600',

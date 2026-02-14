@@ -18,19 +18,19 @@ class DatabaseSeeder extends Seeder
             [
                 'nama' => 'admin',
                 'email' => 'admin@gmail.com',
-                'password' => Hash::make('123456'),
+                'password' => Hash::make('12345678'),
                 'role' => 'admin',
             ],
             [
                 'nama' => 'operator',
                 'email' => 'operator@gmail.com',
-                'password' => Hash::make('123456'),
+                'password' => Hash::make('12345678'),
                 'role' => 'operator',
             ],
             [
                 'nama' => 'Faiq',
                 'email' => 'faiq@gmail.com',
-                'password' => Hash::make('123456'),
+                'password' => Hash::make('12345678'),
                 'role' => 'pelanggan',
             ]
         ];
